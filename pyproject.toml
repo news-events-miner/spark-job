@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "spark-worker"
+name = "spark-job"
 version = "0.1.0"
-description = "Worker that extracts topics from dataset using Top2Vec"
+description = "Spark job that extracts topics from dataset using Top2Vec"
 authors = ["Mikhail Elenskii <elenskii-mikhail@outlook.com>"]
 license = "MIT"
 
