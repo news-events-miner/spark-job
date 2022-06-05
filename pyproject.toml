@@ -9,7 +9,7 @@ license = "MIT"
 python = ">=3.8,<3.11"
 pyspark = "^3.2.1"
 pyarrow = "^8.0.0"
-event-detection = {git = "https://github.com/news-events-miner/event-detection.git"}
+event-detection = {url = "https://github.com/news-events-miner/event-detection/releases/download/alpha/event_detection-0.1.0-py3-none-any.whl"}
 
 [tool.poetry.dev-dependencies]
 
