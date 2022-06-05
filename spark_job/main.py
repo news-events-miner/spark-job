@@ -49,15 +49,22 @@ if __name__ == "__main__":
     import pynndescent
     pynndescent.rp_trees.FlatTree.__module__ = "pynndescent.rp_trees"
 
-    input_file = os.environ.get('SPARK_JOB_INPUT_PATH')
+    s3_path = os.environ.get('S3_PATH')
 
     context = pyspark.SparkContext()
-    session = SparkSession.builder.appName('EventMiner').getOrCreate()
+    session = SparkSession.builder\
+        .appName('EventMiner')\
+        .config('fs.s3a.impl', 'org.apache.hadoop.fs.s3a.S3AFileSystem')\
+        .config('fs.s3a.access.key', os.environ.get('S3_ACCESS_KEY'))\
+        .config('fs.s3a.secret.key', os.environ.get('S3_SECRET_KEY'))\
+        .config('fs.s3a.endpoint', os.environ.get('S3_ENDPOINT'))\
+        .getOrCreate()
 
-    df = session.readStream.csv(input_file,
+    df = session.readStream.csv(s3_path,
                                 header=True,
                                 schema=input_schema,
                                 timestampFormat="%Y-%m-%d %H:%M:%S")
+
     grouped = df.groupBy(window("date", "1 day"))
 
     result = grouped.applyInPandas(apply_event_extraction, schema=schema)
