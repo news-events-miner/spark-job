@@ -20,7 +20,7 @@ USER 185
 
 ENV PATH=$SPARK_HOME/venv/bin:$PATH
 RUN python3 -m venv ${SPARK_HOME}/venv
-RUN pip install --no-cache-dir wheel pyarrow && pip install \
+RUN pip install --no-cache-dir wheel pyarrow requests \
     "https://github.com/news-events-miner/event-detection/releases/download/alpha/event_detection-${WHEEL_VERSION}.whl" --no-cache-dir
 
 COPY ./spark_job /opt/spark/python/custom_jobs/event_extractor

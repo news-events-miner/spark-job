@@ -114,6 +114,7 @@ wordcloud = ">=1.8.1,<2.0.0"
 [package.source]
 type = "url"
 url = "https://github.com/news-events-miner/event-detection/releases/download/alpha/event_detection-0.1.0-py3-none-any.whl"
+
 [[package]]
 name = "fonttools"
 version = "4.33.3"
@@ -839,7 +840,7 @@ pillow = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<3.11"
-content-hash = "8d0ed62fc305a90476dd8b12ed38be66d1f5cd28eedbe4aec96275f464e11c84"
+content-hash = "a02dbc32beff303ba71141c214975077ffe92e4b7d9f4e7cd587ba614157af51"
 
 [metadata.files]
 blis = [
