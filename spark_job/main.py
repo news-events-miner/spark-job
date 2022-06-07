@@ -1,12 +1,15 @@
 import requests
 import pyspark
 import os
+import sys
 import pandas as pd
 from event_detection.extractor import EventExtractor
+from time import sleep
 from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.functions import window
 from pyspark.sql.types import (StructField, StructType, StringType,
                                TimestampType, IntegerType, BooleanType)
+from requests.auth import HTTPBasicAuth
 
 schema = StructType([
     StructField('ok', BooleanType(), False),
@@ -23,18 +26,40 @@ def apply_event_extraction(df: DataFrame):
     events = extractor.extract_events(rows)
     statuses = []
 
-    base_url = f'http://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}'
+    db_host = os.environ.get('DB_HOST')
+    db_port = os.environ.get('DB_PORT')
+    db_user = os.environ.get('DB_USER')
+    db_password = os.environ.get('DB_PASS')
+    db_name = os.environ.get('DB_NAME')
+
+    base_url = f'http://{db_host}:{db_port}/{db_name}'
 
     for i, event in enumerate(events):
-        req = requests.post(base_url, json=event)
-        ok = 'ok'
-        if req.status_code != 201 or req.status_code != 202:
-            ok = 'error'
+        event['date'] = str(event['date'])
+
+        succeed = False
+        attempts = 10
+
+        while attempts > 10 or not succeed:
+            try:
+                req = requests.post(base_url,
+                                    json=event,
+                                    verify=False,
+                                    auth=HTTPBasicAuth(username=db_user,
+                                                       password=db_password))
+                succeed = True
+            except Exception as e:
+                print(f"Attempt to write to DB failed: {e}", file=sys.stderr)
+                attempts -= 1
+                sleep(10)
+        ok = True
+        if attempts == 0 or req.status_code != 201 or req.status_code != 202:
+            ok = False
         statuses.append({'ok': ok})
 
     # pprint(events[0])
 
-    res_df = pd.DataFrame(events)
+    res_df = pd.DataFrame(statuses)
 
     return res_df
 
@@ -52,12 +77,6 @@ if __name__ == "__main__":
     import pynndescent
     pynndescent.rp_trees.FlatTree.__module__ = "pynndescent.rp_trees"
 
-    db_host = os.environ.get('DB_HOST')
-    db_port = os.environ.get('DB_PORT')
-    db_user = os.environ.get('DB_USER')
-    db_password = os.environ.get('DB_PASSWORD')
-    db_name = os.environ.get('DB_NAME')
-
     s3_path = os.environ.get('S3_PATH')
 
     context = pyspark.SparkContext()
@@ -68,6 +87,9 @@ if __name__ == "__main__":
         .config('fs.s3a.secret.key', os.environ.get('S3_SECRET_KEY'))\
         .config('fs.s3a.endpoint', os.environ.get('S3_ENDPOINT'))\
         .getOrCreate()
+
+    conf = pyspark.SparkConf().getAll()
+    print(*conf, sep='\n')
 
     df = session.readStream.csv(s3_path,
                                 header=True,
